@@ -1,0 +1,67 @@
+(
+	[
+		// First wave
+		WaveDescriptor(
+			nb_enemies: 1,
+			new_shop_items: []
+		),
+		// Wave 2
+		WaveDescriptor(
+			nb_enemies: 2,
+			new_shop_items: [
+				ShopItemData(
+					cost: [],
+					effects: [BuildTower],
+				),
+				ShopItemData(
+					cost: [(Banana, 10)],
+					effects: [IncreaseDamage(1)],
+				),
+			],
+		),
+		// Wave 3
+		WaveDescriptor(
+			nb_enemies: 3,
+			new_shop_items: [
+				ShopItemData(
+					cost: [],
+					effects: [BuildTower],
+				),
+			],
+		),
+		// Wave 4
+		WaveDescriptor(
+			nb_enemies: 4,
+			new_shop_items: [
+				ShopItemData(
+					cost: [(Banana, 10)],
+					effects: [MultiplyCooldown(0.9)]
+				),
+			],
+		),
+		// Wave 5
+		WaveDescriptor(
+			nb_enemies: 5,
+			new_shop_items: [
+				ShopItemData(
+					cost: [],
+					effects: [BuildTower],
+				),
+				ShopItemData(
+					cost: [(Banana, 10)],
+					effects: [IncreaseDamage(1)]
+				),
+			],
+		),
+		// Wave 6
+		WaveDescriptor(
+			nb_enemies: 6,
+			new_shop_items: [
+				ShopItemData(
+					cost: [(Banana, 10)],
+					effects: [IncreaseDamage(1)]
+				),
+			],
+		),
+	],
+)

@@ -1,0 +1,8 @@
+(
+    speed: 20.0,
+    gravity: 0.0,
+    spread: 1.0,
+    damage: 1,
+    max_hits: 1,
+    model: "models/projectiles/arrow.gltf#Scene0",
+)

@@ -1,0 +1,36 @@
+[package]
+name = "no_communication_0"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.12"
+# bevy tooling
+bevy-inspector-egui = "0.21"
+
+#physics
+bevy_rapier3d = { version = "0.23", features = [ "simd-stable", "debug-render-3d" ] }
+
+# camera
+dolly = "0.4"
+
+# procgen
+rand = "0.8"
+bracket-noise = "0.8"
+
+# asset serialization
+serde = "1"
+ron = "0.8"
+strum = { version = "0.25.0", features = ["derive"] }
+bevy_vector_shapes = "0.6.0"
+
+
+# Enable a small amount of optimization in debug mode
+[profile.dev]
+opt-level = 1
+
+# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
