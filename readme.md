@@ -2,17 +2,27 @@ This game was made by 5 game developers with NO COMMUNICATION
 
 ## Assets credits
 music: https://opengameart.org/content/8-bit-epic-space-shooter-music
+
 grass texture: https://opengameart.org/content/tileable-grass-textures-set-1
+
 dirt texture: https://opengameart.org/content/tileable-dirt-textures
+
 trees: https://quaternius.itch.io/textured-lowpoly-trees
 
-LICENSE for assets above: https://creativecommons.org/publicdomain/zero/1.0/
+
+#### LICENSE for assets above: https://creativecommons.org/publicdomain/zero/1.0/
+
+---
 
 farmer model: https://sketchfab.com/3d-models/farmer-42abfaee4bd8481ab39661e36cae74c6
+
 tree spawner: https://sketchfab.com/3d-models/earth-wars-ore-13-harvester-metroplex-5b8e4399f8c144ee8fb3bc2c562eb397
+
 utility robot: https://sketchfab.com/3d-models/utility-robot-efe7b67fc77748949562e51c30795dd8
 
-LICENSE for assets above: https://creativecommons.org/licenses/by/4.0/ 
+#### LICENSE for assets above: https://creativecommons.org/licenses/by/4.0/ 
+
+---
 
 ## License
 
