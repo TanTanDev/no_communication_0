@@ -1,12 +1,21 @@
-use bevy::{math::vec3, prelude::*};
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+use bevy::{
+    audio::{Volume, VolumeLevel},
+    math::vec3,
+    prelude::*,
+};
 use bevy_rapier3d::prelude::*;
 use bevy_vector_shapes::ShapePlugin;
 use no_communication_0::{
+    animation_linker::AnimationEntityLinkPlugin,
     border_material::BorderMaterialPlugin,
     camera::{CameraPlugin, DollyCamera, FollowPlayerCamera, MainCameraTag},
+    foliage::FoliagePlugin,
+    ground_material::GroundMaterialPlugin,
     health::HealthPlugin,
     inventory::{InventoryPlugin, Item},
     item_pickups::ItemPickupPlugin,
+    knockback::KnockbackPlugin,
     map::{MapPlugin, MAP_SIZE_HALF},
     notification::{NotificationEvent, NotificationPlugin},
     pickup::PickupPlugin,
@@ -17,6 +26,7 @@ use no_communication_0::{
     state::{AppState, StatePlugin},
     tower::TowerPlugin,
     tree::{TreePlugin, TriggerSpawnTrees},
+    tree_spawner::TreeSpawnerPlugin,
     ui_util::UiUtilPlugin,
     waves::WavePlugin,
     weapon::{AxeSfxCooldownTimer, ProjSfxCooldownTimer, WeaponPlugin, WeaponType},
@@ -32,8 +42,8 @@ fn main() {
         ))
         // Our plugins
         .add_plugins((
+            (BorderMaterialPlugin, GroundMaterialPlugin),
             (
-                BorderMaterialPlugin,
                 UiUtilPlugin,
                 CameraPlugin,
                 PlayerPlugin,
@@ -49,14 +59,22 @@ fn main() {
                 MapPlugin,
                 NotificationPlugin,
             ),
-            (TowerPlugin, WavePlugin, StatePlugin),
+            (
+                TowerPlugin,
+                WavePlugin,
+                StatePlugin,
+                AnimationEntityLinkPlugin,
+                KnockbackPlugin,
+                TreeSpawnerPlugin,
+                FoliagePlugin,
+            ),
         ))
         // debug + large amount of rapier objects LAGS a lot, reduce MAP_SIZE_HALF in that case
         // .add_plugins(RapierDebugRenderPlugin::default())
         // edit camera settings in ui
         // .add_plugins(ResourceInspectorPlugin::<FollowCameraSettings>::default())
         // Enable for inspector
-        .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new())
+        // .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new())
         .add_systems(Startup, setup)
         .run();
 }
@@ -70,6 +88,10 @@ fn setup(
     mut tree_trigger_writer: EventWriter<TriggerSpawnTrees>,
     asset_server: Res<AssetServer>,
 ) {
+    commands.spawn(AudioBundle {
+        source: asset_server.load("sounds/8bit-spaceshooter.ogg"),
+        settings: PlaybackSettings::LOOP.with_volume(Volume::Absolute(VolumeLevel::new(0.3))),
+    });
     tree_trigger_writer.send(TriggerSpawnTrees(0.1));
 
     rapier_config.gravity = Vec3::NEG_Y * 100.0;
@@ -95,6 +117,7 @@ fn setup(
         true => 1.0,
         false => -1.0,
     };
+
     spawn_player_event.send(SpawnPlayerEvent {
         pos: vec3(x, 4.0, z),
         is_main: false,
@@ -105,7 +128,7 @@ fn setup(
     {
         spawn_shop_item_event.send(SpawnShopItemEvent {
             item: ShopItemData {
-                cost: vec![(Item::Log, 3)],
+                cost: vec![(Item::Log, 1)],
                 effects: vec![(ShopItemEffect::PlantTree)],
                 permanent: true,
             },
@@ -130,6 +153,12 @@ fn setup(
             shadows_enabled: true,
             ..default()
         },
+        // cascade_shadow_config: CascadeShadowConfigBuilder {
+        //     num_cascades: 2,
+        //     first_cascade_far_bound: 200.0,
+        //     maximum_distance: 280.0,
+        //     ..default()
+        // },
         transform: Transform::from_xyz(1.0, 8.0, 1.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
@@ -155,7 +184,7 @@ fn setup(
 
     notification_event.send(NotificationEvent {
         text: "Protect The Trees!".into(),
-        show_for: 3.0,
+        show_for: 7.0,
         color: Color::WHITE,
     });
     notification_event.send(NotificationEvent {

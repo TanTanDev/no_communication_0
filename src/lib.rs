@@ -29,5 +29,10 @@ pub mod utils;
 pub mod waves;
 pub mod weapon;
 
+pub mod animation_linker;
 pub mod asset_utils;
 pub mod border_material;
+pub mod foliage;
+pub mod ground_material;
+pub mod knockback;
+pub mod tree_spawner;

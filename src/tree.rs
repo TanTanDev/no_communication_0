@@ -19,6 +19,7 @@ pub struct TriggerSpawnTrees(pub f32);
 pub struct SpawnTreeEvent {
     pub pos: Vec3,
     pub blueprint: TreeBlueprint,
+    pub play_sound: bool,
 }
 
 // how to style tree
@@ -101,8 +102,15 @@ pub fn spawn_trees(
     mut commands: Commands,
     tree_models: Res<TreeModels>,
     time: Res<Time>,
+    asset_server: Res<AssetServer>,
 ) {
     for event in events.read() {
+        if event.play_sound {
+            commands.spawn(AudioBundle {
+                source: asset_server.load("sounds/plant_tree.ogg"),
+                settings: PlaybackSettings::DESPAWN,
+            });
+        }
         let (model_handle, y_scale, xz_scale) = match &event.blueprint {
             TreeBlueprint::Randomized => {
                 let mut rng = rand::thread_rng();
@@ -144,7 +152,7 @@ pub fn spawn_trees(
             .spawn((
                 TreeTrunkTag,
                 DespawnOnHealth0,
-                Health::new(3),
+                Health::new(6),
                 SpawnItemEvery {
                     range: 5.0..20.0,
                     item: if rand::thread_rng().gen_bool(0.1) {
@@ -218,11 +226,11 @@ pub fn spawn_trees(
 
 fn setup_tree_resources(mut commands: Commands, asset_server: Res<AssetServer>) {
     let models = vec![
-        "Pine_1", "Pine_2", "Pine_3", "Pine_7", "Tree_1", "Tree_2", "Tree_3", "Tree_4", "Tree_5",
-        "Tree_6", "Tree_7",
+        "Pine_1", "Pine_2", "Pine_3", "Pine_4", "tree_1", "tree_2", "tree_3", "tree_4", "tree_5",
+        "tree_6", "Birch_1", "Birch_2", "Birch_3", "Birch_4", "Birch_5", "Birch_6",
     ]
     .iter()
-    .map(|name| asset_server.load(format!("models/trees/new/{}.gltf#Scene0", name)))
+    .map(|name| asset_server.load(format!("models/trees/{}.gltf#Scene0", name)))
     .collect::<Vec<_>>();
     commands.insert_resource(TreeModels(models));
 }

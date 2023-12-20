@@ -7,6 +7,7 @@ use crate::{
     player::PlayerControllerTag,
     tower::SpawnTowerEvent,
     tree::{SpawnTreeEvent, TreeBlueprint},
+    tree_spawner::SpawnTreeSpawnerEvent,
     ui_util::{ButtonColor, JustClicked, UiAssets},
     weapon::WeaponStats,
 };
@@ -32,6 +33,7 @@ pub enum ShopItemEffect {
     MultiplyCooldown(f32),
     Heal(i32),
     BuildTower,
+    BuildTreeSpawner,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -52,6 +54,7 @@ impl ShopItemData {
                 ShopItemEffect::MultiplyCooldown(d) => format!("Decrease cooldown (x{d})"),
                 ShopItemEffect::Heal(h) => format!("Heal (+{h})"),
                 ShopItemEffect::BuildTower => String::from("Build defense tower"),
+                ShopItemEffect::BuildTreeSpawner => String::from("Build tree spawner"),
             })
             .map(|s| format!("> {s}\n"))
             .collect()
@@ -64,6 +67,7 @@ impl ShopItemData {
             ShopItemEffect::IncreaseDamage(_) => Color::PURPLE,
             ShopItemEffect::MultiplyCooldown(_) => Color::PURPLE,
             ShopItemEffect::PlantTree => Color::BEIGE,
+            ShopItemEffect::BuildTreeSpawner => Color::TEAL,
         }
         .with_a(0.5)
     }
@@ -191,6 +195,7 @@ fn buy_items(
     mut weapon: Query<&mut WeaponStats>,
     mut inventory: Query<&mut Inventory>,
     mut apply_health_event: EventWriter<ApplyHealthEvent>,
+    mut tree_spawner: EventWriter<SpawnTreeSpawnerEvent>,
     transform: Query<&GlobalTransform>,
 ) {
     let mut apply_effect = |effect: &ShopItemEffect, buyer: Entity| match effect {
@@ -201,6 +206,7 @@ fn buy_items(
                 spawn_tree_event.send(SpawnTreeEvent {
                     pos,
                     blueprint: TreeBlueprint::Randomized,
+                    play_sound: true,
                 });
             }
         }
@@ -224,6 +230,13 @@ fn buy_items(
                 let mut pos = transform.translation();
                 pos.y = 0.0;
                 spawn_tower_event.send(SpawnTowerEvent { pos });
+            }
+        }
+        ShopItemEffect::BuildTreeSpawner => {
+            if let Ok(transform) = transform.get(buyer) {
+                let mut pos = transform.translation();
+                pos.y = 0.0;
+                tree_spawner.send(SpawnTreeSpawnerEvent { pos });
             }
         }
     };

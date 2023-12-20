@@ -26,6 +26,10 @@ ron = "0.8"
 strum = { version = "0.25.0", features = ["derive"] }
 bevy_vector_shapes = "0.6.0"
 
+[profile.release]
+opt-level = "z"  # Optimize for size.
+strip = true  # Automatically strip symbols from the binary.
+panic = "abort"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

@@ -6,7 +6,7 @@ use crate::{
     notification::NotificationEvent,
     player::{Body, PlayerControllerTag, SpawnPlayerEvent},
     shop::SpawnShopItemEvent,
-    tree::{TreeTrunkTag, TriggerSpawnTrees},
+    tree::TreeTrunkTag,
     waves::{WaveDescriptors, WaveDescriptorsAsset},
     weapon::WeaponType,
 };
@@ -64,7 +64,7 @@ fn reached_max_wave(
 fn check_for_no_robots(players: Query<&Body>) -> bool {
     players
         .into_iter()
-        .filter(|b| matches!(b, Body::Robot))
+        .filter(|b| matches!(b, Body::Robot) || matches!(b, Body::FastRobot))
         .count()
         == 0
 }
@@ -75,7 +75,6 @@ pub fn handle_next_wave(
     mut app_state: ResMut<AppState>,
     mut spawn_player_event: EventWriter<SpawnPlayerEvent>,
     mut notification_event: EventWriter<NotificationEvent>,
-    mut tree_trigger_writer: EventWriter<TriggerSpawnTrees>,
     mut spawn_shop_item_event: EventWriter<SpawnShopItemEvent>,
     wave_descriptors: Res<WaveDescriptors>,
     wave_descriptor_assets: Res<Assets<WaveDescriptorsAsset>>,
@@ -83,7 +82,7 @@ pub fn handle_next_wave(
     let AppState::Wave(wave) = app_state.as_mut() else {
         panic!("how did we get here?");
     };
-    tree_trigger_writer.send(TriggerSpawnTrees(0.1 - *wave as f32 / 30.0));
+    // tree_trigger_writer.send(TriggerSpawnTrees(0.1 - *wave as f32 / 30.0));
     let mut rng = rand::thread_rng();
 
     commands.spawn(AudioBundle {
@@ -95,7 +94,7 @@ pub fn handle_next_wave(
 
     let wave_descriptor = wave_descriptor_assets.get(&wave_descriptors.0).unwrap().0[*wave].clone();
 
-    for _i in 1..(1 + wave_descriptor.nb_enemies) {
+    for i in 1..(1 + wave_descriptor.nb_enemies) {
         let weapon_type = WeaponType::Axe;
         let mut x = MAP_SIZE_HALF + rng.gen_range(6.0..26.0);
         let mut z = MAP_SIZE_HALF + rng.gen_range(6.0..26.0);
@@ -107,28 +106,21 @@ pub fn handle_next_wave(
             true => 1.0,
             false => -1.0,
         };
+        let mut body = Body::Robot;
+        let p = i as f32 / wave_descriptor.nb_enemies as f32;
+        if p > 0.7 {
+            body = Body::FastRobot;
+        }
         spawn_player_event.send(SpawnPlayerEvent {
             pos: vec3(x, 4.0, z),
             is_main: false,
-            body: Body::Robot,
+            body,
             weapon_type,
         });
     }
 
     for new_item in wave_descriptor.new_shop_items {
         spawn_shop_item_event.send(SpawnShopItemEvent { item: new_item });
-        // spawn_shop_item_event.send(SpawnShopItemEvent {
-        //     item: ShopItemData {
-        //         cost: vec![(Item::Log, 3)],
-        //         effects: vec![ShopItemEffect::PlantTree],
-        //     },
-        // });
-        // spawn_shop_item_event.send(SpawnShopItemEvent {
-        //     item: ShopItemData {
-        //         cost: vec![(Item::Apple, 3)],
-        //         effects: vec![ShopItemEffect::Heal(10)],
-        //     },
-        // });
     }
 
     notification_event.send(NotificationEvent {

@@ -4,8 +4,10 @@ pub struct UiUtilPlugin;
 
 impl Plugin for UiUtilPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<UiAssets>()
-            .add_systems(Update, (remove_just_clicked, update_button_color).chain());
+        app.init_resource::<UiAssets>().add_systems(
+            PostUpdate,
+            (remove_just_clicked, update_button_color).chain(),
+        );
     }
 }
 
@@ -80,8 +82,8 @@ fn update_button_color(
                 color.0 = button_color.map(|c| c.0).unwrap_or(DEFAULT_BUTTON_COLOR)
             }
         }
-        commands
-            .entity(entity)
-            .insert(LastInteraction(*interaction));
+        if let Some(mut commands) = commands.get_entity(entity) {
+            commands.insert(LastInteraction(*interaction));
+        }
     }
 }

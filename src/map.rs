@@ -4,9 +4,8 @@ use bevy::{
     math::{vec2, vec3},
     pbr::{ExtendedMaterial, NotShadowCaster, OpaqueRendererMethod},
     prelude::*,
-    render::{
-        render_resource::AddressMode,
-        texture::{ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor},
+    render::texture::{
+        ImageAddressMode, ImageLoaderSettings, ImageSampler, ImageSamplerDescriptor,
     },
 };
 use bevy_rapier3d::prelude::*;
@@ -16,6 +15,7 @@ use rand::Rng;
 use crate::{
     border_material::BorderMaterial,
     collision_groups::{COLLISION_BORDER, COLLISION_WORLD},
+    ground_material::GroundMaterial,
     tree::{SpawnTreeEvent, TreeBlueprint, TriggerSpawnTrees},
 };
 
@@ -57,6 +57,7 @@ fn setup_trees(
                 tree_events.send(SpawnTreeEvent {
                     pos: vec3(x as f32, 0.0, z as f32),
                     blueprint: TreeBlueprint::Randomized,
+                    play_sound: false,
                 });
             }
         }
@@ -67,8 +68,18 @@ fn setup_trees(
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials: ResMut<Assets<ExtendedMaterial<StandardMaterial, GroundMaterial>>>,
+    asset_server: Res<AssetServer>,
 ) {
+    let settings = move |s: &mut ImageLoaderSettings| {
+        s.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
+            address_mode_u: ImageAddressMode::Repeat,
+            address_mode_v: ImageAddressMode::Repeat,
+            ..default()
+        });
+    };
+    let grass_img = asset_server.load_with_settings("textures/Grass_01.png", settings);
+    let ground_img = asset_server.load_with_settings("textures/Dirt_01.png", settings);
     // ground
     commands.spawn((
         Collider::cuboid(MAP_SIZE_HALF * 4.0, 0.1, MAP_SIZE_HALF * 4.0),
@@ -77,9 +88,24 @@ fn setup(
             Group::from_bits(COLLISION_WORLD).unwrap(), // part of world(1)
             Group::all(),                               // interacts with all
         ),
-        PbrBundle {
+        MaterialMeshBundle {
             mesh: meshes.add(shape::Plane::from_size(MAP_SIZE_HALF * 4.4).into()),
-            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+            // material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+            material: materials.add(ExtendedMaterial {
+                base: StandardMaterial {
+                    base_color_texture: Some(grass_img),
+                    ..default()
+                },
+                extension: GroundMaterial {
+                    // scale: vec2(13.0, 0.3),
+                    scale: 13.0,
+                    color_texture: ground_img,
+                    noise_scale: 0.3,
+                    // filler: Default::default(),
+                    // filler2: Default::default(),
+                    // color_texture: todo!(),
+                },
+            }),
             transform: Transform::from_translation(vec3(0.0, -0.05, 0.0)),
             ..default()
         },

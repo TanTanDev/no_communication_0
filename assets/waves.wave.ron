@@ -14,7 +14,7 @@
 					effects: [BuildTower],
 				),
 				ShopItemData(
-					cost: [(Banana, 10)],
+					cost: [(Banana, 3)],
 					effects: [IncreaseDamage(1)],
 				),
 			],
@@ -24,8 +24,8 @@
 			nb_enemies: 3,
 			new_shop_items: [
 				ShopItemData(
-					cost: [],
-					effects: [BuildTower],
+					cost: [(Log, 5)],
+					effects: [BuildTreeSpawner],
 				),
 			],
 		),
@@ -34,7 +34,7 @@
 			nb_enemies: 4,
 			new_shop_items: [
 				ShopItemData(
-					cost: [(Banana, 10)],
+					cost: [(Banana, 3)],
 					effects: [MultiplyCooldown(0.9)]
 				),
 			],
@@ -48,7 +48,7 @@
 					effects: [BuildTower],
 				),
 				ShopItemData(
-					cost: [(Banana, 10)],
+					cost: [(Banana, 5)],
 					effects: [IncreaseDamage(1)]
 				),
 			],
@@ -58,10 +58,38 @@
 			nb_enemies: 6,
 			new_shop_items: [
 				ShopItemData(
-					cost: [(Banana, 10)],
+					cost: [(Apple, 3)],
 					effects: [IncreaseDamage(1)]
 				),
+				ShopItemData(
+					cost: [(Log, 5)],
+					effects: [BuildTreeSpawner],
+				),
 			],
+		),
+		// Wave 7
+		WaveDescriptor(
+			nb_enemies: 9,
+			new_shop_items: [
+				ShopItemData(
+					cost: [],
+					effects: [BuildTower],
+				),
+				ShopItemData(
+					cost: [(Log, 3)],
+					effects: [MultiplyCooldown(0.9)]
+				),
+			],
+		),
+		// Wave 8
+		WaveDescriptor(
+			nb_enemies: 12,
+			new_shop_items: [
+				ShopItemData(
+					cost: [(Banana, 5)],
+					effects: [MultiplyCooldown(0.7)]
+				),
+			]
 		),
 	],
 )
