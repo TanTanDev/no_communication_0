@@ -31,6 +31,7 @@ pub mod weapon;
 
 pub mod animation_linker;
 pub mod asset_utils;
+pub mod background;
 pub mod border_material;
 pub mod foliage;
 pub mod ground_material;

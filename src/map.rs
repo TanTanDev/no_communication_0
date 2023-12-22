@@ -89,7 +89,8 @@ fn setup(
             Group::all(),                               // interacts with all
         ),
         MaterialMeshBundle {
-            mesh: meshes.add(shape::Plane::from_size(MAP_SIZE_HALF * 4.4).into()),
+            // mesh: meshes.add(shape::Plane::from_size(MAP_SIZE_HALF * 4.4).into()),
+            mesh: meshes.add(shape::Plane::from_size(MAP_SIZE_HALF * 2.0 + 15.0).into()),
             // material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
             material: materials.add(ExtendedMaterial {
                 base: StandardMaterial {

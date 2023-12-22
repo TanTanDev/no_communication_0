@@ -24,6 +24,7 @@ use crate::{
 
 pub const PLAYER_HEALTH: i32 = 20;
 pub const ROBOT_HEALTH: i32 = 10;
+pub const BOSS_HEALTH: i32 = 100;
 pub const FAST_ROBOT_HEALTH: i32 = 6;
 pub const PLAYER_PICKUP_RADIUS: f32 = 3.0;
 
@@ -39,6 +40,7 @@ pub enum Body {
     Monkey,
     Robot,
     FastRobot,
+    Boss,
 }
 
 #[derive(Event)]
@@ -272,26 +274,44 @@ fn apply_attack(
 }
 
 fn apply_movement(
-    mut query: Query<(&PlayerInput, &mut Transform, &Player, &mut Velocity)>,
+    mut query: Query<(
+        &PlayerInput,
+        &mut Transform,
+        &Player,
+        &mut Velocity,
+        Option<&MonkeyTag>,
+    )>,
     time: Res<Time>,
+    pointer: Res<PointerPos>,
 ) {
-    for (input, mut transform, player, mut velocity) in query.iter_mut() {
+    for (input, mut transform, player, mut velocity, monkey_tag) in query.iter_mut() {
         let normalized_input = input.movement.normalize_or_zero();
         let desired_velocity = normalized_input * player.movement_speed;
         let true_velocity = velocity.linvel;
 
         velocity.linvel = Vec3::lerp(true_velocity, desired_velocity, time.delta_seconds() * 10.0);
-        let desired_quat =
+        let mut desired_quat =
             Quat::from_rotation_y(f32::atan2(normalized_input.x, normalized_input.z));
 
         // rotate to where we are heading
-        if normalized_input.length() > 0.1 {
+        if monkey_tag.is_some() {
+            if let Some(pointer_on) = pointer.pointer_on {
+                let target = pointer_on.wpos;
+                let target = Vec3::new(target.x, 0.0, target.z) - transform.translation;
+                desired_quat = Quat::from_rotation_y(f32::atan2(target.x, target.z));
+            }
+        } else if normalized_input.length() > 0.1 {
             transform.rotation = Quat::lerp(
                 transform.rotation,
                 desired_quat,
                 time.delta_seconds() * player.rotation_speed,
             );
         }
+        transform.rotation = Quat::lerp(
+            transform.rotation,
+            desired_quat,
+            time.delta_seconds() * player.rotation_speed,
+        );
     }
 }
 
@@ -406,6 +426,10 @@ fn load_character_models(mut commands: Commands, asset_server: Res<AssetServer>)
             Body::FastRobot,
             asset_server.load("models/characters/fast_robot.gltf#Scene0"),
         ),
+        (
+            Body::Boss,
+            asset_server.load("models/characters/boss.glb#Scene0"),
+        ),
     ])));
 }
 
@@ -421,6 +445,7 @@ fn spawn_players(
             Body::Monkey => 20.0,
             Body::Robot => 10.0,
             Body::FastRobot => 14.0,
+            Body::Boss => 7.5,
         };
         let collision_groups = match event.body {
             Body::Monkey => {
@@ -436,7 +461,7 @@ fn spawn_players(
                     .unwrap(),
                 )
             }
-            Body::Robot | Body::FastRobot => {
+            Body::Robot | Body::FastRobot | Body::Boss => {
                 // EXPLANATION: see docs/physics.txt
                 CollisionGroups::new(
                     Group::from_bits(COLLISION_CHARACTER).unwrap(),
@@ -449,6 +474,7 @@ fn spawn_players(
             Body::Monkey => Health::new(PLAYER_HEALTH),
             Body::Robot => Health::new(ROBOT_HEALTH),
             Body::FastRobot => Health::new(FAST_ROBOT_HEALTH),
+            Body::Boss => Health::new(BOSS_HEALTH),
         };
         let weapon_stats = match event.body {
             Body::Monkey => WeaponStats::default(),
@@ -459,6 +485,10 @@ fn spawn_players(
             Body::FastRobot => WeaponStats {
                 cooldown_mul: 0.8,
                 damage_add: 0,
+            },
+            Body::Boss => WeaponStats {
+                cooldown_mul: 1.0,
+                damage_add: 1,
             },
         };
 
@@ -566,7 +596,7 @@ fn spawn_players(
                     next_anim: None,
                 });
             }
-            Body::Robot | Body::FastRobot => {
+            Body::Robot | Body::FastRobot | Body::Boss => {
                 let scene = character_models.0[&event.body].clone();
                 let graphics = commands
                     .spawn(SceneBundle {
@@ -578,15 +608,6 @@ fn spawn_players(
                 commands.entity(graphics).set_parent(player_root);
             }
         }
-        // let scene = character_models.0[&event.body].clone();
-        // let graphics = commands
-        //     .spawn(SceneBundle {
-        //         scene,
-        //         transform: Transform::from_translation(vec3(0.0, 0.5, 0.0)),
-        //         ..default()
-        //     })
-        //     .id();
-        // commands.entity(graphics).set_parent(player_root);
 
         if event.is_main {
             commands.entity(player_root).insert((

@@ -10,6 +10,8 @@ use crate::{
 
 pub const AXE_SFX_COOLDOWN: f32 = 0.11;
 pub const PROJ_SFX_COOLDOWN: f32 = 0.3;
+pub const SLEDGEHAMMER_SFX_COOLDOWN: f32 = 0.6;
+
 #[derive(Resource)]
 pub struct AxeSfxCooldownTimer(pub f32);
 #[derive(Resource)]
@@ -34,6 +36,7 @@ impl Default for WeaponStats {
 pub enum WeaponType {
     Axe,
     Bow(Handle<ProjectileAsset>),
+    SledgeHammer,
 }
 
 // should maybe be fetched from asssets
@@ -42,6 +45,7 @@ impl WeaponType {
         let (sound_name, volume) = match self {
             WeaponType::Axe => ("axe", 0.5),
             WeaponType::Bow(_) => ("bow", 0.9),
+            WeaponType::SledgeHammer => ("sledgehammer", 1.0),
         };
         let path = format!("sounds/{}-projectile.ogg", sound_name);
         (path, volume)
@@ -51,6 +55,7 @@ impl WeaponType {
         match self {
             WeaponType::Axe => 0.4,
             WeaponType::Bow(_) => 0.6,
+            WeaponType::SledgeHammer => 1.4,
         }
     }
 }
@@ -91,7 +96,7 @@ impl Plugin for WeaponPlugin {
                 (
                     update_cooldown,
                     promote_try_cast,
-                    (cast_axes, cast_projectiles),
+                    (cast_axes, cast_projectiles, cast_sledgehammer),
                 )
                     .chain(),
             );
@@ -277,5 +282,103 @@ pub fn cast_projectiles(
             caster_entity: event.caster_entity,
             target_entity: event.target_entity,
         })
+    }
+}
+
+// sledgehammer behaviour (pretty much a big axe)
+pub fn cast_sledgehammer(
+    mut events: EventReader<CastWeaponEvent>,
+    mut query: Query<(&GlobalTransform, &WeaponStats)>,
+    rapier_context: Res<RapierContext>,
+    mut apply_health_events: EventWriter<ApplyHealthEvent>,
+    mut gizmos: Gizmos,
+    transforms: Query<&GlobalTransform, With<Health>>,
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut sfx_cooldown: ResMut<AxeSfxCooldownTimer>,
+    time: Res<Time>,
+) {
+    for event in events.read() {
+        let Ok((caster_transform_g, stats)) = query.get_mut(event.caster_entity) else {
+            continue;
+        };
+        let WeaponType::SledgeHammer = &event.weapon_type else {
+            continue;
+        };
+
+        let axe_range = 2.6;
+        // 90 degree swing
+        let axe_cone_dot = 0.3;
+
+        let shape = Collider::ball(axe_range);
+        let shape_pos = caster_transform_g.translation();
+        let filter = QueryFilter::default();
+        const SLEDGEHAMMER_DAMAGE: i32 = 6;
+        let sledgehammer_damage = stats.damage_add + SLEDGEHAMMER_DAMAGE;
+        const MAX_HIT: i32 = 2;
+        let mut hits = 0;
+        rapier_context.intersections_with_shape(
+            shape_pos,
+            Quat::IDENTITY,
+            &shape,
+            filter,
+            |hit_entity| {
+                let Ok(hit_transform) = transforms.get(hit_entity) else {
+                    return true;
+                };
+                let to_target = caster_transform_g.translation() - hit_transform.translation();
+                // let to_target = hit_transform.translation() - caster_transform_g.translation();
+                let to_target_dir = to_target.normalize();
+                let caster_dir = event.dir;
+                let dot = -caster_dir.dot(to_target_dir);
+                let is_outside_of_cone = dot < axe_cone_dot;
+                if is_outside_of_cone {
+                    return true;
+                }
+
+                // don't hurt self
+                if hit_entity == event.caster_entity {
+                    // continue intersection_with_shape
+                    return true;
+                }
+                gizmos.sphere(
+                    hit_transform.translation(),
+                    Quat::IDENTITY,
+                    0.9,
+                    Color::YELLOW,
+                );
+                gizmos.line(
+                    caster_transform_g.translation() + Vec3::Y * 2.0,
+                    hit_transform.translation() + Vec3::Y * 2.0,
+                    Color::YELLOW,
+                );
+                if sfx_cooldown.0 >= SLEDGEHAMMER_SFX_COOLDOWN {
+                    commands.spawn(AudioBundle {
+                        source: asset_server.load("sounds/chop.ogg"),
+                        settings: PlaybackSettings {
+                            volume: bevy::audio::Volume::Relative(bevy::audio::VolumeLevel::new(
+                                0.6,
+                            )),
+                            speed: 1.0 + rand::thread_rng().gen::<f32>(),
+                            ..Default::default()
+                        },
+                    });
+                    sfx_cooldown.0 = 0.0;
+                } else {
+                    sfx_cooldown.0 += time.delta_seconds();
+                }
+                apply_health_events.send(ApplyHealthEvent {
+                    amount: -sledgehammer_damage,
+                    target_entity: hit_entity,
+                    caster_entity: event.caster_entity,
+                });
+                hits += 1;
+                if hits <= MAX_HIT - 1 {
+                    true // continute search
+                } else {
+                    false // don't hit anything more
+                }
+            },
+        );
     }
 }

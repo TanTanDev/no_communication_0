@@ -83,7 +83,7 @@
 		),
 		// Wave 8
 		WaveDescriptor(
-			nb_enemies: 12,
+			nb_enemies: 6,
 			new_shop_items: [
 				ShopItemData(
 					cost: [(Banana, 5)],

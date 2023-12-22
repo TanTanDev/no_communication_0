@@ -8,6 +8,7 @@ use bevy_rapier3d::prelude::*;
 use bevy_vector_shapes::ShapePlugin;
 use no_communication_0::{
     animation_linker::AnimationEntityLinkPlugin,
+    background::{setup_space_bg, SpaceMaterial},
     border_material::BorderMaterialPlugin,
     camera::{CameraPlugin, DollyCamera, FollowPlayerCamera, MainCameraTag},
     foliage::FoliagePlugin,
@@ -67,6 +68,7 @@ fn main() {
                 KnockbackPlugin,
                 TreeSpawnerPlugin,
                 FoliagePlugin,
+                MaterialPlugin::<SpaceMaterial>::default(),
             ),
         ))
         // debug + large amount of rapier objects LAGS a lot, reduce MAP_SIZE_HALF in that case
@@ -75,7 +77,7 @@ fn main() {
         // .add_plugins(ResourceInspectorPlugin::<FollowCameraSettings>::default())
         // Enable for inspector
         // .add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new())
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (setup, setup_space_bg))
         .run();
 }
 

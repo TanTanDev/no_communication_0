@@ -64,7 +64,9 @@ fn reached_max_wave(
 fn check_for_no_robots(players: Query<&Body>) -> bool {
     players
         .into_iter()
-        .filter(|b| matches!(b, Body::Robot) || matches!(b, Body::FastRobot))
+        .filter(|b| {
+            matches!(b, Body::Robot) || matches!(b, Body::FastRobot) || matches!(b, Body::Boss)
+        })
         .count()
         == 0
 }
@@ -92,7 +94,9 @@ pub fn handle_next_wave(
 
     *wave += 1;
 
-    let wave_descriptor = wave_descriptor_assets.get(&wave_descriptors.0).unwrap().0[*wave].clone();
+    let wave_descriptors = &wave_descriptor_assets.get(&wave_descriptors.0).unwrap().0;
+    let is_last_wave = wave_descriptors.len() - 1 == *wave;
+    let wave_descriptor = wave_descriptors[*wave].clone();
 
     for i in 1..(1 + wave_descriptor.nb_enemies) {
         let weapon_type = WeaponType::Axe;
@@ -110,6 +114,9 @@ pub fn handle_next_wave(
         let p = i as f32 / wave_descriptor.nb_enemies as f32;
         if p > 0.7 {
             body = Body::FastRobot;
+        }
+        if is_last_wave && i == wave_descriptor.nb_enemies {
+            body = Body::Boss;
         }
         spawn_player_event.send(SpawnPlayerEvent {
             pos: vec3(x, 4.0, z),
