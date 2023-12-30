@@ -14,7 +14,7 @@ trees: https://quaternius.itch.io/textured-lowpoly-trees
 
 ---
 
-farmer model: https://sketchfab.com/3d-models/farmer-42abfaee4bd8481ab39661e36cae74c6
+farmer model: https://sketchfab.com/3d-models/farmer-medievalfantasyassets-8590fcc3c8a84d2dadf132a33654efcb
 
 tree spawner: https://sketchfab.com/3d-models/earth-wars-ore-13-harvester-metroplex-5b8e4399f8c144ee8fb3bc2c562eb397
 
